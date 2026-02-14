@@ -1,0 +1,42 @@
+function [Sp1,Sp2]=MSD(x_pre,y_pre,x,y,VR,dynamic,dT)
+C=0.2;  %入侵距离
+% Vh=1.6;
+Tr=0.21;%系统反应时间
+as=10;  %机器人刹车加速度
+VO=dynamic.velocity(1);
+%%
+% 求MSD方法一  这种方法
+% dr=norm(xrp-last_xrp);
+% dh=norm(obstacle_position-xrp);
+% cos_phi1=dot(xrp-last_xrp,obstacle_position-xrp)/(dr*dh);
+% Sp1=sqrt(dh^2+(VR*Tr)^2-2*dh*VR*Tr*cos_phi1)+VR*Tr;
+
+
+
+
+%%
+% 求MSD方法二   这种方法更好用
+
+% Sp2=VO*(Tr+VR/as)+VR*Tr+VR^2/(2*as)+C; %两者相互运动
+
+% d_R=norm([x,y]-[x_pre,y_pre]);          %两者非直接相互运动   %机器人刹车速度按速度分量算    
+% d_O=norm(dynamic.center-dynamic.center_pre);
+% d_RO=norm(dynamic.center_pre-[x_pre,y_pre])-dynamic.radius;
+% d_1=norm([x,y]-dynamic.center_pre)-dynamic.radius;
+% d_2=norm(dynamic.center-[x_pre,y_pre])-dynamic.radius;
+% cos_phi2=(d_RO^2+d_R^2-d_1^2)/(2*d_RO*d_R);
+% cos_phi3=(d_RO^2+d_O^2-d_2^2)/(2*d_RO*d_O);
+% vr=VR*cos_phi2;
+% vo=VO*cos_phi3;
+% Sp1=vo*(Tr+vr/as)+vr*Tr+vr^2/(2*as)+C;
+
+
+d_R=norm([x,y]-[x_pre,y_pre]);          %两者非直接相互运动 %机器人刹车速度按机器人速度算 
+d_O=norm(dynamic.center-dynamic.center_pre);
+d_RO_1=norm(dynamic.center_pre-[x_pre,y_pre])-dynamic.radius;
+d_RO_2=norm(dynamic.center-[x,y])-dynamic.radius;
+d=norm(dynamic.center-[x_pre,y_pre])-dynamic.radius;
+V_relative=(d_RO_1-d_RO_2)/dT;
+cos_phi2=(d_RO_1^2+d_O^2-d^2)/(2*d_RO_1*d_O);
+vo=dynamic.velocity(1)*cos_phi2;
+Sp2=V_relative*Tr+vo*VR/as+VR^2/(2*as)+C;

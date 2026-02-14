@@ -1,0 +1,82 @@
+%
+% Copyright (c) 2015, Yarpiz (www.yarpiz.com)
+% All rights reserved. Please read the "license.txt" for license terms.
+%
+% Project Code: YPAP115
+% Project Title: Path Planning using PSO in MATLAB
+% Publisher: Yarpiz (www.yarpiz.com)
+% 
+% Developer: S. Mostapha Kalami Heris (Member of Yarpiz Team)
+% 
+% Contact Info: sm.kalami@gmail.com, info@yarpiz.com
+%
+
+function sol2=getSolution(sol1,model)
+
+    x=sol1.x;
+    y=sol1.y;
+    
+    xs=model.xs;
+    ys=model.ys;
+    xt=model.xt;
+    yt=model.yt;
+    xobs=model.xobs;
+    yobs=model.yobs;
+    robs=model.robs;
+    
+    XS=[xs x xt]; %xs是起始，x是xmin与xmax之间均匀随机数组成的1x3向量（相当于是路径上的几个中间点），xt是目标位置，
+    YS=[ys y yt];%ys是起始，y是ymin与ymax之间均匀随机数组成的1x3向量（相当于是路径上的几个中间点），yt是目标位置，
+    k=numel(XS);  %路径上一共有几个点
+    TS=linspace(0,1,k);  %生成0-1之间k个等间距点的行向量
+    
+    tt=linspace(0,1,100);%生成0-1之间100个等间距点的行向量
+    xx=spline(TS,XS,tt);  %以tt为步长，TS为x，XS为y，进行三次样条数据插值得到
+    yy=spline(TS,YS,tt);    %对yy三次样条数据插值
+    
+    dx=diff(xx);      %求导
+    dy=diff(yy);      %求导
+    
+    L=sum(sqrt(dx.^2+dy.^2));      
+    
+    nobs = numel(xobs); % Number of Obstacles
+    Violation = 0;
+    for k=1:nobs
+        d=sqrt((xx-xobs(k)).^2+(yy-yobs(k)).^2);%轨迹上的点与障碍物中心的距离
+        v=max(1-d/(robs(k)+0.1),0);               %判断是否与障碍物碰撞   v是0不碰撞，大于0碰撞
+        Violation=Violation+mean(v);  %mean(v)返回元素均值，Violation为0不碰撞，不为0碰撞
+    end
+    
+    sol2.TS=TS;
+    sol2.XS=XS;
+    sol2.YS=YS;
+    sol2.tt=tt;
+    sol2.xx=xx;
+    sol2.yy=yy;
+    sol2.dx=dx;
+    sol2.dy=dy;
+    sol2.L=L;
+    sol2.Violation=Violation;
+    sol2.IsFeasible=(Violation==0);  %碰撞时为1，
+    
+%     figure;
+%     plot(xx,yy);
+%     hold on;
+%     plot(XS,YS,'ro');
+%     xlabel('x');
+%     ylabel('y');
+%     
+%     figure;
+%     plot(tt,xx);
+%     hold on;
+%     plot(TS,XS,'ro');
+%     xlabel('t');
+%     ylabel('x');
+%     
+%     figure;
+%     plot(tt,yy);
+%     hold on;
+%     plot(TS,YS,'ro');
+%     xlabel('t');
+%     ylabel('y');
+    
+end
